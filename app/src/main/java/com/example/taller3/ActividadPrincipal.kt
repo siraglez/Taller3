@@ -3,6 +3,7 @@ package com.example.taller3
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.provider.ContactsContract.Data
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
@@ -30,8 +31,13 @@ import androidx.compose.ui.unit.dp
 
 class ActividadPrincipal : ComponentActivity() {
 
+    private lateinit var dbHelper: DatabaseHelper
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        //Inicializar el helper de la base de datos
+        dbHelper = DatabaseHelper(this)
 
         //Recuperar el nombre almacenado desde SharedPreferences
         val sharedPref = getSharedPreferences("MyAppPrefs", Context.MODE_PRIVATE)
@@ -39,9 +45,18 @@ class ActividadPrincipal : ComponentActivity() {
 
         setContent {
             //Pasamos el nombre guardado al Composable para inicializarlo
-            ActividadPrincipalScreen(nombreGuardado, onGuardarNombre = { nombre ->
-                guardarNombre(nombre)
-            }, onNavigate = { navigateToConfig() })
+            ActividadPrincipalScreen(
+                nombreGuardado,
+                onGuardarNombre = { nombre ->
+                    guardarNombre(nombre)
+                },
+                onGuardarEnBaseDeDatos = { nombre ->
+                    guardarEnBaseDeDatos(nombre)
+                },
+                onCargarDesdeBaseDeDatos = {
+                    cargarDesdeBaseDeDatos()
+                },
+                onNavigate = { navigateToConfig() })
         }
     }
 
@@ -54,6 +69,14 @@ class ActividadPrincipal : ComponentActivity() {
         }
     }
 
+    private fun guardarEnBaseDeDatos(nombre: String) {
+        dbHelper.insertName(nombre)
+    }
+
+    private fun cargarDesdeBaseDeDatos(): List<String> {
+        return dbHelper.getAllNames()
+    }
+
     private fun navigateToConfig() {
         val intent = Intent(this, PantallaConfiguracion::class.java)
         startActivity(intent)
@@ -64,10 +87,13 @@ class ActividadPrincipal : ComponentActivity() {
 fun ActividadPrincipalScreen(
     nombreInicial: String,
     onGuardarNombre: (String) -> Unit,
+    onGuardarEnBaseDeDatos: (String) -> Unit,
+    onCargarDesdeBaseDeDatos: () -> List<String>,
     onNavigate: () -> Unit
 ) {
     var nombre by remember { mutableStateOf("") } //Nombre ingresado en el campo de texto
     var nombreGuardado by remember { mutableStateOf(nombreInicial) } //Nombre que se mostrará
+    var nombresEnBaseDeDatos by remember { mutableStateOf(emptyList<String>()) }
     var isLoading by remember { mutableStateOf(false) }
     var progress by remember { mutableStateOf(0) }
 
@@ -89,7 +115,7 @@ fun ActividadPrincipalScreen(
                 .width(200.dp)
                 .height(40.dp)
         )
-        //Botón para guardar nombre
+        //Botón para guardar nombre en SharedPreferences
         Spacer(modifier = Modifier.height(16.dp))
         Button(onClick = {
             onGuardarNombre(nombre)
@@ -99,9 +125,28 @@ fun ActividadPrincipalScreen(
             Text(text = "Guardar Nombre")
         }
 
+        //Botón para guardar nombre en SQLite
+        Spacer(modifier = Modifier.height(16.dp))
+        Button(onClick = {
+            onGuardarEnBaseDeDatos(nombre)
+            nombre = ""
+        }) {
+            Text(text = "Guardar en base de datos")
+        }
+
+        //Botón para cargar nombres desde SQLite
+        Spacer(modifier = Modifier.height(16.dp))
+        Button(onClick = {
+            nombresEnBaseDeDatos = onCargarDesdeBaseDeDatos()
+        }) {
+            Text(text = "Cargar nombres desde base de datos")
+        }
+
         //Mostrar el nombre ingresado
         Spacer(modifier = Modifier.height(16.dp))
-        Text(text = "Nombre ingresado: $nombreGuardado")
+        nombresEnBaseDeDatos.forEach { nombre ->
+            Text(text = nombre)
+        }
 
         //Botón para navegar a la configuración
         Spacer(modifier = Modifier.height(16.dp))
@@ -142,6 +187,8 @@ fun ActividadPrincipalScreenPreview() {
     ActividadPrincipalScreen(
         nombreInicial = "Android",
         onGuardarNombre = {},
+        onGuardarEnBaseDeDatos = {},
+        onCargarDesdeBaseDeDatos = { emptyList() },
         onNavigate = {}
     )
 }
