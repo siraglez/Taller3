@@ -3,7 +3,6 @@ package com.example.taller3
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.provider.ContactsContract.Data
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
@@ -44,7 +43,6 @@ class ActividadPrincipal : ComponentActivity() {
         val nombreGuardado = sharedPref.getString("nombre_usuario", "") ?: ""
 
         setContent {
-            //Pasamos el nombre guardado al Composable para inicializarlo
             ActividadPrincipalScreen(
                 nombreGuardado,
                 onGuardarNombre = { nombre ->
@@ -56,7 +54,8 @@ class ActividadPrincipal : ComponentActivity() {
                 onCargarDesdeBaseDeDatos = {
                     cargarDesdeBaseDeDatos()
                 },
-                onNavigate = { navigateToConfig() })
+                onNavigate = { navigateToConfig() }
+            )
         }
     }
 
@@ -122,7 +121,7 @@ fun ActividadPrincipalScreen(
             nombreGuardado = nombre //Actualizar el nombre guardado
             nombre = "" //Vaciar el campo de texto
         }) {
-            Text(text = "Guardar Nombre")
+            Text(text = "Guardar nombre en SharedPreferences")
         }
 
         //Botón para guardar nombre en SQLite
@@ -131,7 +130,7 @@ fun ActividadPrincipalScreen(
             onGuardarEnBaseDeDatos(nombre)
             nombre = ""
         }) {
-            Text(text = "Guardar en base de datos")
+            Text(text = "Guardar nombre en SQLite")
         }
 
         //Botón para cargar nombres desde SQLite
@@ -139,7 +138,7 @@ fun ActividadPrincipalScreen(
         Button(onClick = {
             nombresEnBaseDeDatos = onCargarDesdeBaseDeDatos()
         }) {
-            Text(text = "Cargar nombres desde base de datos")
+            Text(text = "Cargar nombres desde SQLite")
         }
 
         //Mostrar el nombre ingresado
@@ -160,14 +159,15 @@ fun ActividadPrincipalScreen(
             if (!isLoading) { //Solo iniciar si no está en carga
                 isLoading = true
                 progress = 0 //Reiniciar el progreso
-                NetworkTask(object : OnTaskCompleted {
+                val task = NetworkTask(object : OnTaskCompleted {
                     override fun onTaskComplete(progressValue: Int) {
                         progress = progressValue
                         if (progress >= 100) {
                             isLoading = false //Finalizar la carga
                         }
                     }
-                }).execute() //Crear una nueva instancia cada vez
+                })
+                task.startTask() //Iniciar la tarea con coroutines
             }
         }) {
             Text(text = "Iniciar Tarea")

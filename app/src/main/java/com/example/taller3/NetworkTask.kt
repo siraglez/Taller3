@@ -1,25 +1,27 @@
 package com.example.taller3
 
-import android.os.AsyncTask
+import kotlinx.coroutines.*
+import kotlin.coroutines.CoroutineContext
 
-//Clase AsyncTask para simular una operación de red
+class NetworkTask(
+    private val listener: OnTaskCompleted,
+    private val coroutineContext: CoroutineContext = Dispatchers.IO
+) {
+    private var job: Job? = null
 
-class NetworkTask(private val listener: OnTaskCompleted) : AsyncTask<Void, Int, Void>() {
-    override fun doInBackground(vararg params: Void?): Void? {
-        for (i in 1..100) {
-            Thread.sleep(500) //Simular tiempo de espera
-            publishProgress(i * 10) //Publicar el progreso
+    //Función para iniciar la tarea simulada
+    fun startTask() {
+        job = CoroutineScope(coroutineContext).launch {
+            for (i in 1..10) {
+                delay(500L) //Simular tiempo de espera (500 ms)
+                listener.onTaskComplete(i * 10) //Notificar progreso
+            }
+            listener.onTaskComplete(100) //Finalizar progreso
         }
-        return null
     }
 
-    override fun onProgressUpdate(vararg values: Int?) {
-        super.onProgressUpdate(*values)
-        values.firstOrNull()?.let { listener.onTaskComplete(it) } //Notifica el progreso al listener
-    }
-
-    override fun onPostExecute(result: Void?) {
-        super.onPostExecute(result)
-        listener.onTaskComplete(100) //Finaliza el progreso
+    //Función para cancelar la tarea si es necesario
+    fun cancelTask() {
+        job?.cancel()
     }
 }
