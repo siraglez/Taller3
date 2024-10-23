@@ -1,5 +1,6 @@
 package com.example.taller3
 
+import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
@@ -8,6 +9,7 @@ import android.os.Environment
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Button
@@ -15,20 +17,35 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.graphics.Color
 import androidx.core.content.ContextCompat
 import java.util.*
 
 class MainActivity : ComponentActivity() {
 
+    //Lanzador de permisos para manejar la solicitud de WRITE_EXTERNAL_STORAGE
+    private val requestPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        if (isGranted) {
+            //Permiso concedido
+            val filePath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS).absolutePath + "/datos_externos.txt"
+            AlmacenamientoUtils.guardarEnAlmacenamientoExterno(filePath, "Algunos datos de prueba")
+            val datosExternos = AlmacenamientoUtils.leerDesdeAlmacenamientoExterno(filePath)
+            Log.d("Externo", "Datos leídos del almacenamiento externo: $datosExternos")
+        } else {
+            //Permiso denegado
+            Log.e("Permisos", "Permiso de almacenamiento externo denegado")
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        //Alamcenamiento externo
+        //Almacenamiento externo
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            //Usa el almacenamiento específico de la app
             val externalDir = getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS)
             val filePath = "${externalDir?.absolutePath}/datos_externos.txt"
             AlmacenamientoUtils.guardarEnAlmacenamientoExterno(filePath, "Algunos datos de prueba")
@@ -36,8 +53,7 @@ class MainActivity : ComponentActivity() {
             val datosExternos = AlmacenamientoUtils.leerDesdeAlmacenamientoExterno(filePath)
             Log.d("Externo", "Datos leídos del almacenamiento externo: $datosExternos")
         } else {
-            //Para versiones anteriores de Android que requieren WRITE_EXTERNAL_STORAGE
-            if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
                 == PackageManager.PERMISSION_GRANTED) {
                 val filePath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS).absolutePath + "/datos_externos.txt"
                 AlmacenamientoUtils.guardarEnAlmacenamientoExterno(filePath, "Algunos datos de prueba")
@@ -45,8 +61,8 @@ class MainActivity : ComponentActivity() {
                 val datosExternos = AlmacenamientoUtils.leerDesdeAlmacenamientoExterno(filePath)
                 Log.d("Externo", "Datos leídos del almacenamiento externo: $datosExternos")
             } else {
-                //Solicitar permisos para versiones anteriores si es necesario
-                requestPermissions(arrayOf(android.Manifest.permission.WRITE_EXTERNAL_STORAGE), MY_PERMISSION_REQUEST_CODE)
+                //Solicitar permisos de escritura en almacenamiento externo
+                requestPermissionLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
             }
         }
 
@@ -55,24 +71,10 @@ class MainActivity : ComponentActivity() {
         val datosInternos = AlmacenamientoUtils.leerDesdeAlmacenamientoInterno(this, "datos_internos.txt")
         Log.d("Interno", "Datos leídos del almacenamiento interno: $datosInternos")
 
+        //Establecer el contenido de la pantalla
         setContent {
             MainScreen { navigateToMainActivity() }
         }
-    }
-
-     fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
-        super.onRequestPermissionsResult(requestCode, permissions as Array<String>, grantResults)
-        if (requestCode == MY_PERMISSION_REQUEST_CODE) {
-            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                // Permiso concedido, continuar con el acceso al almacenamiento externo
-                val filePath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS).absolutePath + "/datos_externos.txt"
-                AlmacenamientoUtils.guardarEnAlmacenamientoExterno(filePath, "Algunos datos de prueba")
-            }
-        }
-    }
-
-    companion object {
-        const val MY_PERMISSION_REQUEST_CODE = 1001
     }
 
     private fun navigateToMainActivity() {
@@ -88,7 +90,8 @@ fun MainScreen(onNavigate: () -> Unit) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier
+            .fillMaxSize()
             .background(Color.LightGray)
     ) {
         Text(text = saludo)
