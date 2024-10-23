@@ -124,6 +124,10 @@ fun ActividadPrincipalScreen(
             Text(text = "Guardar nombre en SharedPreferences")
         }
 
+        //Mostrar el nombre ingresado en SharedPreferences
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(text = "Nombre en SharedPreferences: $nombreGuardado")
+
         //Botón para guardar nombre en SQLite
         Spacer(modifier = Modifier.height(16.dp))
         Button(onClick = {
@@ -141,7 +145,8 @@ fun ActividadPrincipalScreen(
             Text(text = "Cargar nombres desde SQLite")
         }
 
-        //Mostrar el nombre ingresado
+        //Mostrar el nombre ingresado en SQLite
+        Text(text = "Nombres en SQLite: ")
         Spacer(modifier = Modifier.height(16.dp))
         nombresEnBaseDeDatos.forEach { nombre ->
             Text(text = nombre)
