@@ -31,6 +31,11 @@
             android:exported="true"
             android:label="@string/app_name"
             android:theme="@style/Theme.Taller3"/>
+        <activity
+            android:name=".PantallaConfiguracion"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:theme="@style/Theme.Taller3"/>
     </application>
 
 </manifest>
