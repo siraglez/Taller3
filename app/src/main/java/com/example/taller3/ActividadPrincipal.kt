@@ -117,20 +117,6 @@ fun ActividadPrincipalScreen(
                 .width(200.dp)
                 .height(40.dp)
         )
-        //Botón para guardar nombre en SharedPreferences
-        Spacer(modifier = Modifier.height(16.dp))
-        Button(onClick = {
-            onGuardarNombre(nombre)
-            nombreGuardado = nombre //Actualizar el nombre guardado
-            nombre = "" //Vaciar el campo de texto
-        }) {
-            Text(text = "Guardar nombre en SharedPreferences")
-        }
-
-        //Mostrar el nombre ingresado en SharedPreferences
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(text = "Nombre en SharedPreferences: $nombreGuardado")
-
         //Botón para guardar nombre en SQLite
         Spacer(modifier = Modifier.height(16.dp))
         Button(onClick = {
@@ -159,26 +145,6 @@ fun ActividadPrincipalScreen(
         Spacer(modifier = Modifier.height(16.dp))
         Button(onClick = { onNavigate() }) {
             Text(text = "Ir a Configuración")
-        }
-
-        //Botón para iniciar tarea en segundo plano
-        Spacer(modifier = Modifier.height(16.dp))
-        Button(onClick = {
-            if (!isLoading) { //Solo iniciar si no está en carga
-                isLoading = true
-                progress = 0 //Reiniciar el progreso
-                val task = NetworkTask(object : OnTaskCompleted {
-                    override fun onTaskComplete(progressValue: Int) {
-                        progress = progressValue
-                        if (progress >= 100) {
-                            isLoading = false //Finalizar la carga
-                        }
-                    }
-                })
-                task.startTask() //Iniciar la tarea con coroutines
-            }
-        }) {
-            Text(text = "Iniciar Tarea")
         }
 
         //Indicador de progreso
