@@ -3,6 +3,7 @@ package com.example.taller3
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
@@ -73,7 +74,9 @@ class ActividadPrincipal : ComponentActivity() {
     }
 
     private fun cargarDesdeBaseDeDatos(): List<String> {
-        return dbHelper.getAllNames()
+        val nombres =  dbHelper.getAllNames()
+        Log.d("ActividadPrincipal", "Nombres cargados: $nombres")
+        return nombres
     }
 
     private fun navigateToConfig() {
